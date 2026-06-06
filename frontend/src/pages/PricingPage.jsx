@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { initiatePayment } from '../components/payments/RazorpayCheckout';
+import { initiateStripePayment } from '../components/payments/StripeCheckout';
 import client from '../api/client';
 import { Check, Loader2 } from 'lucide-react';
 
@@ -10,6 +11,35 @@ export default function PricingPage() {
   const navigate = useNavigate();
   const [isAnnual, setIsAnnual] = useState(false);
   const [loadingPlan, setLoadingPlan] = useState(null);
+  const [gateway, setGateway] = useState('razorpay'); // 'razorpay' or 'stripe'
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const stripeSessionId = params.get('stripe_session_id') || params.get('session_id');
+    const stripeMockSuccess = params.get('stripe_mock_success');
+    const cancel = params.get('stripe_cancel');
+
+    if (cancel) {
+      alert('Stripe subscription payment was cancelled.');
+      window.history.replaceState({}, document.title, window.location.pathname);
+      return;
+    }
+
+    if (stripeSessionId && (stripeMockSuccess || params.has('stripe_session_id'))) {
+      const plan = params.get('plan') || 'pro';
+      setLoadingPlan(plan);
+      client.post('/payments/verify-stripe', { sessionId: stripeSessionId })
+        .then(res => {
+          alert(`Payment successful! Welcome to the ${res.data.plan} plan.`);
+          navigate('/dashboard');
+        })
+        .catch(err => {
+          alert(err.response?.data?.message || 'Stripe payment verification failed');
+          window.history.replaceState({}, document.title, window.location.pathname);
+        })
+        .finally(() => setLoadingPlan(null));
+    }
+  }, [navigate]);
 
   const handleSubscribe = async (plan) => {
     if (!isAuthenticated) {
@@ -19,18 +49,22 @@ export default function PricingPage() {
 
     setLoadingPlan(plan);
     try {
-      const res = await initiatePayment(plan, user || {});
-      
-      // Send verification to backend
-      await client.post('/payments/verify', {
-        orderId: res.razorpay_order_id,
-        paymentId: res.razorpay_payment_id,
-        signature: res.razorpay_signature,
-        plan: res.plan
-      });
+      if (gateway === 'stripe') {
+        await initiateStripePayment(plan);
+      } else {
+        const res = await initiatePayment(plan, user || {});
+        
+        // Send verification to backend
+        await client.post('/payments/verify', {
+          orderId: res.razorpay_order_id,
+          paymentId: res.razorpay_payment_id,
+          signature: res.razorpay_signature,
+          plan: res.plan
+        });
 
-      alert(`Payment successful! Welcome to the ${plan} plan.`);
-      navigate('/dashboard');
+        alert(`Payment successful! Welcome to the ${plan} plan.`);
+        navigate('/dashboard');
+      }
     } catch (err) {
       alert(err.message || 'Payment failed. Please try again.');
     } finally {
@@ -61,6 +95,27 @@ export default function PricingPage() {
           <span className={`font-semibold flex items-center gap-2 ${isAnnual ? 'text-gray-900' : 'text-gray-500'}`}>
             Annually <span className="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full font-bold">Save 20%</span>
           </span>
+        </div>
+
+        {/* Payment Method Selector */}
+        <div className="flex items-center justify-center gap-3 mt-6 bg-white px-4 py-2 border border-gray-200 rounded-2xl shadow-sm max-w-sm mx-auto">
+          <span className="text-xs font-bold text-gray-400 uppercase tracking-wide">Method:</span>
+          <div className="flex gap-1.5">
+            {['razorpay', 'stripe'].map(method => (
+              <button
+                key={method}
+                type="button"
+                onClick={() => setGateway(method)}
+                className={`px-3 py-1.5 text-xs font-extrabold uppercase rounded-lg transition-all cursor-pointer ${
+                  gateway === method 
+                    ? 'bg-orange-500 text-white shadow-sm shadow-orange-500/10' 
+                    : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
+                }`}
+              >
+                {method}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 

@@ -12,7 +12,11 @@ const app = express();
 // Apply security headers, CORS, and sanitization
 securityHeaders(app);
 
-app.use(express.json());
+app.use(express.json({
+  verify: (req, res, buf) => {
+    req.rawBody = buf;
+  }
+}));
 app.use(cookieParser());
 
 // Apply rate limiting to all API routes

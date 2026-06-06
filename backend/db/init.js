@@ -22,6 +22,15 @@ async function initializeDatabase() {
       } else {
         console.log('Database tables already exist. Skipping schema initialization.');
       }
+
+      // Run migrations for Stripe payment columns
+      console.log('Checking and applying database migrations for Stripe payment integration...');
+      await db.query(`
+        ALTER TABLE payments ADD COLUMN IF NOT EXISTS stripe_session_id VARCHAR(255);
+        ALTER TABLE payments ADD COLUMN IF NOT EXISTS stripe_payment_id VARCHAR(255);
+        ALTER TABLE payments ADD COLUMN IF NOT EXISTS gateway VARCHAR(50) DEFAULT 'razorpay';
+      `);
+      console.log('Stripe database migrations completed.');
     } else {
       console.warn('schema.sql not found at:', schemaPath);
     }
