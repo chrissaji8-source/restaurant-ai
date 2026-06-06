@@ -14,6 +14,7 @@ import ForecastPage from './pages/ForecastPage';
 import DashboardPage from './pages/DashboardPage';
 import SettingsPage from './pages/SettingsPage';
 import ProfilePage from './pages/ProfilePage';
+import AdminPage from './pages/AdminPage';
 
 function PlaceholderPage({ title }) {
   return (
@@ -45,6 +46,7 @@ function App() {
           <Route path="/forecast" element={<ProtectedRoute><ForecastPage /></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
           <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+          <Route path="/admin" element={<ProtectedRoute requireAdmin><AdminPage /></ProtectedRoute>} />
         </Routes>
       </Router>
     </AuthProvider>
