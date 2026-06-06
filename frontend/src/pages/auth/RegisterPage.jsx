@@ -65,6 +65,25 @@ export default function RegisterPage() {
     }
   };
 
+  const handleSelectPlanWithoutPayment = async (plan) => {
+    setLoading(true);
+    setError('');
+    try {
+      await client.post('/auth/register', {
+        ...formData,
+        seating_capacity: formData.seatingCapacity,
+        delivery_enabled: formData.deliveryEnabled,
+        avg_ticket_size: formData.avgTicketSize,
+        plan
+      });
+      navigate('/verify-otp', { state: { email: formData.email } });
+    } catch (err) {
+      setError(err.response?.data?.message || err.message || 'Registration failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center py-12 px-4 sm:px-6 lg:px-8">
       {/* Progress Bar */}
@@ -211,7 +230,15 @@ export default function RegisterPage() {
               <button onClick={() => handleSelectPlan('chain')} disabled={loading} className="w-full py-3 rounded-xl font-bold border-2 border-gray-900 text-gray-900 hover:bg-gray-50 transition-colors">Select Plan</button>
             </div>
           </div>
-          <div className="mt-8 text-center">
+          <div className="mt-8 text-center flex flex-col items-center gap-4">
+            <button 
+              type="button"
+              onClick={() => handleSelectPlanWithoutPayment('trial')}
+              disabled={loading}
+              className="text-orange-600 hover:text-orange-700 font-extrabold text-sm underline bg-orange-55 hover:bg-orange-100/50 px-5 py-2.5 rounded-xl transition-all cursor-pointer disabled:opacity-50"
+            >
+              Start 30-day Free Trial (Continue without payment)
+            </button>
             <button onClick={() => setStep(2)} className="text-gray-500 hover:text-gray-700 font-medium">← Back to Restaurant Details</button>
           </div>
         </div>
