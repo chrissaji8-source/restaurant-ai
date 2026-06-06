@@ -2,10 +2,11 @@ const axios = require('axios');
 const Redis = require('ioredis');
 require('dotenv').config();
 
-const redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379');
+const redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379', { maxRetriesPerRequest: 1 });
 
 redis.on('error', (err) => {
-  console.error('Redis connection error:', err.message);
+  redis.get = async () => null;
+  redis.set = async () => 'OK';
 });
 
 async function getWeather(lat, lon) {
