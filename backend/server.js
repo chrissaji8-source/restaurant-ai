@@ -1,22 +1,46 @@
 const express = require('express');
 const cors = require('cors');
+const cookieParser = require('cookie-parser');
 require('dotenv').config();
 
+const securityHeaders = require('./middleware/security');
+const { apiLimiter } = require('./middleware/rateLimiter');
+const { verifyToken } = require('./middleware/auth');
+
 const app = express();
-app.use(cors());
+
+// Apply security headers, CORS, and sanitization
+securityHeaders(app);
+
 app.use(express.json());
+app.use(cookieParser());
+
+// Apply rate limiting to all API routes
+app.use('/api', apiLimiter);
+
+// Apply token verification to all API routes (auth middleware handles exclusions)
+app.use('/api', verifyToken);
 
 // Routes
+const authRouter = require('./routes/auth');
+const paymentsRouter = require('./routes/payments');
 const insightsRouter = require('./routes/insights');
 const restaurantsRouter = require('./routes/restaurants');
+const checkSubscription = require('./middleware/checkSubscription');
 
-app.use('/api/insights', insightsRouter);
+const campaignsRouter = require('./routes/campaigns');
+
+app.use('/api/auth', authRouter);
+app.use('/api/payments', paymentsRouter);
+
+// Protected routes with subscription guard
+app.use('/api/insights', checkSubscription, insightsRouter);
+app.use('/api/campaigns', checkSubscription, campaignsRouter);
+
+const forecastRouter = require('./routes/forecast');
+
 app.use('/api/restaurants', restaurantsRouter);
-
-// Dummy routers for other endpoints
-app.use('/api/campaigns', express.Router().get('/', (req, res) => res.json({ message: 'campaigns route' })));
-app.use('/api/forecast', express.Router().get('/', (req, res) => res.json({ message: 'forecast route' })));
-app.use('/api/auth', express.Router().get('/', (req, res) => res.json({ message: 'auth route' })));
+app.use('/api/forecast', checkSubscription, forecastRouter);
 
 // Initialize cron jobs
 require('./cron/dailyRefresh');
