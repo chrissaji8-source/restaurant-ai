@@ -12,7 +12,8 @@ const verifyToken = (req, res, next) => {
     '/api/payments/webhook'
   ];
   
-  if (openRoutes.includes(req.path)) {
+  const requestPath = req.originalUrl.split('?')[0];
+  if (openRoutes.includes(requestPath) || openRoutes.includes(req.path)) {
     return next();
   }
 

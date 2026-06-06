@@ -1,5 +1,4 @@
 const helmet = require('helmet');
-const mongoSanitize = require('express-mongo-sanitize');
 const cors = require('cors');
 
 const securityHeaders = (app) => {
@@ -19,9 +18,6 @@ const securityHeaders = (app) => {
     },
     xssFilter: true, // Sets X-XSS-Protection: 1; mode=block
   }));
-
-  // Sanitize user input to prevent injection
-  app.use(mongoSanitize());
 
   // CORS Configuration
   app.use(cors({
