@@ -48,19 +48,33 @@ export function useDashboard(restaurantId) {
     };
   }, [restaurantId]);
 
-  const refetch = () => {
+  const refetch = async () => {
     setData(prev => ({ ...prev, loading: true }));
-    // In a real app this would call fetchData again
-    setTimeout(() => {
+    try {
+      // Actually call the backend API to get new campaigns from Claude!
+      const insightsRes = await getInsights(restaurantId);
       setData(prev => ({
         ...prev,
-        loading: false,
+        insights: insightsRes,
         campaigns: {
-          instagram: 'Craving something amazing? 🍛 Come taste the magic tonight! #foodie #fresh',
-          whatsapp: 'Hey! We have fresh specials cooking tonight. Message us to reserve your spot!',
-        }
+          instagram: insightsRes.daily_insights?.instagram_caption || mockCampaigns.instagram,
+          whatsapp: insightsRes.daily_insights?.whatsapp_message || mockCampaigns.whatsapp,
+        },
+        loading: false,
       }));
-    }, 1000);
+    } catch (e) {
+      console.log("Refetch API failed, falling back to mock", e);
+      setTimeout(() => {
+        setData(prev => ({
+          ...prev,
+          loading: false,
+          campaigns: {
+            instagram: 'Craving something amazing? 🍛 Come taste the magic tonight! #foodie #fresh',
+            whatsapp: 'Hey! We have fresh specials cooking tonight. Message us to reserve your spot!',
+          }
+        }));
+      }, 1000);
+    }
   };
 
   return { ...data, refetch };
