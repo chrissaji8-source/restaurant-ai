@@ -69,6 +69,22 @@ async function initializeDatabase() {
       console.log('Admin user seeded: admin@salesai.com / admin123');
     }
 
+    // 4. Ensure default demo owner user exists
+    const ownerEmail = 'demo@salesai.com';
+    const ownerCheck = await db.query('SELECT id FROM users WHERE email = $1', [ownerEmail]);
+    if (ownerCheck.rows.length === 0) {
+      console.log('Seeding default restaurant owner account...');
+      const passwordHash = await bcrypt.hash('demo123', 12);
+      await db.query(`
+        INSERT INTO users (
+          restaurant_id, name, email, password_hash, role, is_verified
+        ) VALUES (
+          $1, 'Demo Owner', $2, $3, 'owner', true
+        )
+      `, [defaultRestaurantId, ownerEmail, passwordHash]);
+      console.log('Demo user seeded: demo@salesai.com / demo123');
+    }
+
     console.log('Database initialization completed.');
   } catch (error) {
     console.warn('⚠️ Database initialization bypassed/failed (Postgres might be offline):', error.message);

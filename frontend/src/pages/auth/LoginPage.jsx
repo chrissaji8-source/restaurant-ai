@@ -39,6 +39,19 @@ export default function LoginPage() {
     }
   };
 
+  const handleDemoBypass = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      await login('demo@salesai.com', 'demo123');
+      navigate('/dashboard');
+    } catch (err) {
+      setError('Failed to enter demo mode. Please verify the backend is running.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="flex min-h-screen bg-white">
       {/* Left side: Value proposition */}
@@ -158,6 +171,21 @@ export default function LoginPage() {
               className="w-full bg-gray-900 hover:bg-black disabled:bg-gray-400 text-white font-bold py-3 px-4 rounded-xl shadow-lg shadow-gray-200 transition-all flex justify-center items-center mt-6"
             >
               {loading ? <Loader2 className="animate-spin" size={24} /> : 'Log in to Dashboard'}
+            </button>
+
+            <div className="relative flex py-2 items-center">
+              <div className="flex-grow border-t border-gray-200"></div>
+              <span className="flex-shrink mx-4 text-gray-400 text-xs font-semibold uppercase tracking-wider">or</span>
+              <div className="flex-grow border-t border-gray-200"></div>
+            </div>
+
+            <button 
+              type="button" 
+              onClick={handleDemoBypass}
+              disabled={loading}
+              className="w-full bg-orange-50 hover:bg-orange-100/80 border border-orange-200 text-orange-600 font-extrabold py-3 px-4 rounded-xl shadow-sm transition-all flex justify-center items-center gap-2 cursor-pointer"
+            >
+              Explore Demo Environment (No Sign-in)
             </button>
           </form>
 

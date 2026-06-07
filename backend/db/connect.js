@@ -58,6 +58,17 @@ function initMockDbFile() {
           role: 'admin',
           is_verified: true,
           created_at: new Date().toISOString()
+        },
+        {
+          id: 'demo-user-uuid',
+          restaurant_id: '550e8400-e29b-41d4-a716-446655440000',
+          name: 'Demo Owner',
+          email: 'demo@salesai.com',
+          // bcrypt hash of 'demo123'
+          password_hash: '$2b$12$FvJAxzSjKwPhZXZYPi9ok.f5pl0OlUogQaexIYvaExN9Z4PwwAkCi',
+          role: 'owner',
+          is_verified: true,
+          created_at: new Date().toISOString()
         }
       ],
       campaigns: [],
