@@ -20,8 +20,24 @@ const securityHeaders = (app) => {
   }));
 
   // CORS Configuration
+  const allowedOrigins = [
+    process.env.ALLOWED_ORIGIN,
+    'http://localhost:3000',
+    'http://localhost:5173'
+  ].filter(Boolean);
+
   app.use(cors({
-    origin: [process.env.ALLOWED_ORIGIN || 'http://localhost:3000', 'http://localhost:5173'],
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+      const isAllowed = allowedOrigins.some(allowed => origin === allowed) ||
+                        origin.endsWith('.up.railway.app') ||
+                        /^http:\/\/localhost:\d+$/.test(origin);
+      if (isAllowed) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     credentials: true, // Required for httpOnly cookies
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   }));
