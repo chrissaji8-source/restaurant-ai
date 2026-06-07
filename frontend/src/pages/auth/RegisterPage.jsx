@@ -46,7 +46,7 @@ export default function RegisterPage() {
       const paymentRes = await initiatePayment(plan, formData);
       
       // 2. Register user with payment details
-      await client.post('/auth/register', {
+      const response = await client.post('/auth/register', {
         ...formData,
         seating_capacity: formData.seatingCapacity,
         delivery_enabled: formData.deliveryEnabled,
@@ -57,7 +57,7 @@ export default function RegisterPage() {
       });
       
       // 3. Redirect to OTP verification
-      navigate('/verify-otp', { state: { email: formData.email } });
+      navigate('/verify-otp', { state: { email: formData.email, devOtp: response.data?.otp } });
     } catch (err) {
       setError(err.message || 'Registration failed');
     } finally {
@@ -69,14 +69,14 @@ export default function RegisterPage() {
     setLoading(true);
     setError('');
     try {
-      await client.post('/auth/register', {
+      const response = await client.post('/auth/register', {
         ...formData,
         seating_capacity: formData.seatingCapacity,
         delivery_enabled: formData.deliveryEnabled,
         avg_ticket_size: formData.avgTicketSize,
         plan
       });
-      navigate('/verify-otp', { state: { email: formData.email } });
+      navigate('/verify-otp', { state: { email: formData.email, devOtp: response.data?.otp } });
     } catch (err) {
       setError(err.response?.data?.message || err.message || 'Registration failed');
     } finally {

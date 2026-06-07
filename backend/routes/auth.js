@@ -64,7 +64,11 @@ router.post('/register', async (req, res) => {
     await storeOTP(email, otp);
     await sendEmail(email, 'Your RestaurantAI Verification Code', `Your OTP is: ${otp}. It expires in 10 minutes.`);
 
-    res.json({ message: 'OTP sent to your email' });
+    const isMock = !process.env.EMAIL_USER || !process.env.EMAIL_PASS || process.env.EMAIL_USER === 'mock';
+    res.json({ 
+      message: 'OTP sent to your email',
+      ...(isMock ? { otp } : {})
+    });
   } catch (error) {
     await db.query('ROLLBACK');
     console.error('Register error', error);
@@ -93,6 +97,30 @@ router.post('/verify-otp', otpLimiter, async (req, res) => {
     res.json({ accessToken, user });
   } catch (error) {
     console.error('Verify OTP error', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+router.post('/resend-otp', otpLimiter, async (req, res) => {
+  const { email } = req.body;
+  if (!email || !/^\S+@\S+\.\S+$/.test(email)) return res.status(400).json({ message: 'Invalid email format' });
+
+  try {
+    const userRes = await db.query('SELECT is_verified FROM users WHERE email = $1', [email]);
+    if (userRes.rows.length === 0) return res.status(404).json({ message: 'User not found' });
+    if (userRes.rows[0].is_verified) return res.status(400).json({ message: 'Email already verified' });
+
+    const otp = generateOTP();
+    await storeOTP(email, otp);
+    await sendEmail(email, 'Your RestaurantAI Verification Code', `Your OTP is: ${otp}. It expires in 10 minutes.`);
+
+    const isMock = !process.env.EMAIL_USER || !process.env.EMAIL_PASS || process.env.EMAIL_USER === 'mock';
+    res.json({ 
+      message: 'OTP resent successfully',
+      ...(isMock ? { otp } : {})
+    });
+  } catch (error) {
+    console.error('Resend OTP error', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
